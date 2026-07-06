@@ -1,0 +1,29 @@
+# Sample data — one example row per tab. Copy the rows under each header block into the matching tab to see how populated data looks. Delete when you're comfortable with the format.
+
+# === ExchangeRates ===
+rate_date,usd_to_twd_rate,source,notes
+2026-07-05,32.15,Wise,End-of-day mid-market
+
+# === RetailerOrders ===
+internal_order_id,retailer,purchase_date,retailer_order_number,original_expected_delivery_date,current_expected_delivery_date,total_price_usd,sales_tax_usd,domestic_shipping_usd,exchange_rate_usd_twd,total_price_twd,payment_method,order_status,risk_status,delay_count,latest_vendor_update,last_vendor_email_date,needs_review,notes,source_email_id,source_email_link
+ORD-20260705-1001,Target,2026-07-05,102-9876543-1234567,2026-07-12,2026-07-12,249.99,15.62,0.00,,,Visa ****1234,Confirmed,Low,0,Order confirmed,2026-07-05,FALSE,First test order,gmail-msg-abc123,
+
+# === OrderItems ===
+internal_item_id,internal_order_id,retailer_order_number,product_name,product_category,sku,quantity_ordered,quantity_cancelled,quantity_received,unit_price_usd,total_item_price_usd,estimated_value_twd,item_status,notes
+ITM-20260705-2001,ORD-20260705-1001,102-9876543-1234567,2024 Topps Chrome Hobby Box,Sports Cards,TOPPS-CHR-24-HOB,1,0,0,249.99,,,Ordered,
+
+# === USShipments ===
+internal_shipment_id,internal_order_id,retailer_order_number,carrier,us_tracking_number,shipment_status,shipped_date,expected_delivery_date,actual_delivery_date,delivered_to_forwarder,tracking_source,notes
+SHP-20260706-3001,ORD-20260705-1001,102-9876543-1234567,UPS,1Z999AA10123456784,Label Created,2026-07-06,2026-07-12,,FALSE,Retailer shipping email,
+
+# === VendorEmailUpdates ===
+vendor_update_id,internal_order_id,retailer,retailer_order_number,email_subject,email_date,email_type,update_type,old_expected_delivery_date,new_expected_delivery_date,us_tracking_number,affected_items,severity,action_needed,confidence_score,raw_email_summary,source_email_id,source_email_link,notes
+VUP-20260705-4001,ORD-20260705-1001,Target,102-9876543-1234567,Your Target order confirmation,2026-07-05,Order Confirmation,Initial confirmation,,,,,Info,None,0.98,Confirms 1 Topps Chrome Hobby Box $249.99 shipping to forwarder,gmail-msg-abc123,,
+
+# === ForwarderShipments ===
+forwarder_record_id,us_tracking_number,matched_internal_order_id,warehouse_received_date,forwarder_status,package_weight,shipping_cost_usd,shipping_cost_twd,taiwan_tracking_number,taiwan_carrier,taiwan_ship_date,taiwan_delivery_status,taiwan_delivery_date,notes
+FWD-20260714-5001,1Z999AA10123456784,,2026-07-14,Received,0.85,,,,,,,,Waiting for consolidation
+
+# === InventoryLots ===
+inventory_lot_id,internal_order_id,internal_item_id,product_name,quantity_available,quantity_reserved,quantity_sold,landed_cost_usd,unit_landed_cost_usd,landed_cost_twd,unit_landed_cost_twd,inventory_status,location,notes
+LOT-20260720-6001,ORD-20260705-1001,ITM-20260705-2001,2024 Topps Chrome Hobby Box,1,0,0,285.50,,,,In Transit,Forwarder-CA,Includes tax + estimated TW shipping share

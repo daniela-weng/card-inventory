@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Inventory Ops — Sports Cards US → TW</title>
+<style>
+  :root {
+    --bg:#0f172a; --panel:#1e293b; --panel2:#334155; --text:#e2e8f0;
+    --muted:#94a3b8; --accent:#38bdf8; --accent2:#818cf8;
+    --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; --crit:#ef4444;
+    --border:#334155;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+  header{background:var(--panel);padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:10}
+  header h1{margin:0;font-size:18px;font-weight:600}
+  header .sub{color:var(--muted);font-size:12px}
+  nav{display:flex;gap:2px;background:var(--panel);padding:0 20px;border-bottom:1px solid var(--border);overflow-x:auto;position:sticky;top:49px;z-index:9}
+  nav button{background:transparent;border:none;color:var(--muted);padding:12px 16px;cursor:pointer;font-size:13px;border-bottom:2px solid transparent;white-space:nowrap}
+  nav button:hover{color:var(--text)}
+  nav button.active{color:var(--accent);border-bottom-color:var(--accent)}
+  main{padding:20px;max-width:1600px;margin:0 auto}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px}
+  .card h2{margin:0 0 12px;font-size:15px;color:var(--accent2)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .grid{display:grid;gap:8px}
+  .grid-2{grid-template-columns:1fr 1fr}
+  .grid-3{grid-template-columns:1fr 1fr 1fr}
+  .grid-4{grid-template-columns:1fr 1fr 1fr 1fr}
+  label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px}
+  input,select,textarea{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:6px 8px;font:inherit}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+  textarea{min-height:80px;font-family:'SF Mono',Consolas,monospace;font-size:12px}
+  button.btn{background:var(--accent);color:#0f172a;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font:inherit;font-weight:600}
+  button.btn:hover{background:#22d3ee}
+  button.btn.sec{background:var(--panel2);color:var(--text)}
+  button.btn.sec:hover{background:#475569}
+  button.btn.danger{background:var(--bad);color:#0f172a}
+  button.btn.small{padding:4px 8px;font-size:12px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{text-align:left;background:var(--panel2);padding:8px;position:sticky;top:0;font-weight:600;color:var(--text);border-bottom:1px solid var(--border)}
+  td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+  tr:hover td{background:#293548}
+  tr.needs-review td{background:rgba(248,113,113,0.15)}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600}
+  .pill.low{background:rgba(74,222,128,0.2);color:var(--ok)}
+  .pill.medium{background:rgba(251,191,36,0.2);color:var(--warn)}
+  .pill.high{background:rgba(251,146,60,0.2);color:#fb923c}
+  .pill.critical{background:rgba(239,68,68,0.2);color:var(--crit)}
+  .stat{background:var(--panel2);padding:14px;border-radius:6px;border:1px solid var(--border)}
+  .stat .v{font-size:24px;font-weight:700;color:var(--accent)}
+  .stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-top:4px}
+  .table-wrap{overflow-x:auto;max-height:600px;overflow-y:auto}
+  .actions{display:flex;gap:4px}
+  .empty{text-align:center;padding:24px;color:var(--muted)}
+  .flash{position:fixed;bottom:20px;right:20px;background:var(--ok);color:#0f172a;padding:10px 16px;border-radius:6px;font-weight:600;opacity:0;transition:opacity 0.3s;z-index:100}
+  .flash.show{opacity:1}
+  .flash.err{background:var(--bad)}
+  details{margin:8px 0}
+  summary{cursor:pointer;color:var(--muted);font-size:12px;padding:4px 0}
+  code{background:var(--bg);padding:2px 6px;border-radius:3px;font-family:'SF Mono',Consolas,monospace;font-size:12px}
+  .tag{background:var(--panel2);color:var(--muted);padding:2px 6px;border-radius:3px;font-size:11px;margin-right:4px}
+  .hint{color:var(--muted);font-size:12px;margin-top:6px}
+  .toolbar{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+  .search{flex:1;max-width:300px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Inventory Ops</h1>
+  <span class="sub">Sports Cards · US → Taiwan</span>
+  <div style="margin-left:auto" class="row">
+    <span id="rateBadge" class="tag"></span>
+    <button class="btn small sec" onclick="exportAll()">Backup (JSON)</button>
+    <button class="btn small sec" onclick="document.getElementById('importFile').click()">Restore</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importAll(event)">
+  </div>
+</header>
+
+<nav id="nav"></nav>
+
+<main id="main"></main>
+
+<div id="flash" class="flash"></div>
+
+<script>
+// ============================================================
+// DATA MODEL & STORAGE
+// ============================================================
+const TABS = [
+  {id:'dashboard', label:'Dashboard'},
+  {id:'orders', label:'Retailer Orders'},
+  {id:'items', label:'Order Items'},
+  {id:'shipments', label:'US Shipments'},
+  {id:'vendorEmails', label:'Vendor Emails'},
+  {id:'forwarder', label:'Forwarder Shipments'},
+  {id:'inventory', label:'Inventory Lots'},
+  {id:'rates', label:'Exchange Rates'},
+  {id:'tools', label:'Tools'}
+];
+
+const RETAILERS = ['Target',"Dick's Sporting Goods",'Topps','Fanatics','Walmart','eBay','Amazon','Other'];
+const ORDER_STATUS = ['Order Placed','Confirmed','Processing','Shipped','In Transit','Delayed','Partially Shipped','Backordered','Cancelled','Refunded','Delivered to US Forwarder','Forwarder Received','Shipping to Taiwan','Arrived Taiwan','Delivered to Buyer','Needs Review'];
+const RISK_STATUS = ['Low','Medium','High','Critical'];
+const EMAIL_TYPE = ['Order Confirmation','Shipping Confirmation','Delivery Date Update','Delay Notice','Partial Shipment','Backorder Notice','Cancellation','Refund','Payment Issue','Delivered Notice','Return / Replacement','General Vendor Message','Unknown'];
+const ITEM_STATUS = ['Ordered','Shipped','Partially Shipped','Cancelled','Refunded','Received at Forwarder','Delivered to Buyer','Backordered'];
+const INV_STATUS = ['In Transit','At US Forwarder','Shipping to Taiwan','Available','Reserved','Sold','Lost','Damaged'];
+const SHIP_STATUS = ['Label Created','In Transit','Out for Delivery','Delivered','Exception','Returned','Lost'];
+const FWD_STATUS = ['Awaiting Arrival','Received','Consolidating','Shipped to Taiwan','Arrived Taiwan','Delivered','Held','Lost'];
+const TW_DELIVERY = ['Awaiting Ship','In Transit','Out for Delivery','Delivered','Exception'];
+const SEVERITY = ['Info','Low','Medium','High','Critical'];
+
+const STORE_KEY = 'invops_v1';
+
+const emptyDB = () => ({
+  orders:[], items:[], shipments:[], vendorEmails:[],
+  forwarder:[], inventory:[], rates:[], meta:{createdAt:new Date().toISOString()}
+});
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return emptyDB();
+    const db = JSON.parse(raw);
+    // ensure all keys exist
+    const e = emptyDB();
+    for(const k in e) if(!db[k]) db[k] = e[k];
+    return db;
+  }catch(e){ return emptyDB() }
+}
+function save(){ localStorage.setItem(STORE_KEY, JSON.stringify(DB)); updateRateBadge() }
+let DB = load();
+
+// ============================================================
+// UTILITIES
+// ============================================================
+const $ = (id) => document.getElementById(id);
+const fmt = (v, def='—') => v===null||v===undefined||v===''? def : v;
+const today = () => new Date().toISOString().slice(0,10);
+const now = () => new Date().toISOString();
+function uid(prefix){
+  const d = today().replace(/-/g,'');
+  const r = Math.floor(1000+Math.random()*9000);
+  return `${prefix}-${d}-${r}`;
+}
+function flash(msg, err=false){
+  const el = $('flash');
+  el.textContent = msg;
+  el.className = 'flash show' + (err?' err':'');
+  clearTimeout(flash._t);
+  flash._t = setTimeout(()=>{ el.className='flash' }, 2200);
+}
+function usd(n){ if(n===''||n===null||n===undefined||isNaN(n)) return '—'; return '$'+Number(n).toFixed(2) }
+function twd(n){ if(n===''||n===null||n===undefined||isNaN(n)) return '—'; return 'NT$'+Math.round(Number(n)).toLocaleString() }
+function rateForDate(dateStr){
+  if(!dateStr) return null;
+  // exact match, else most recent <=
+  const sorted = [...DB.rates].filter(r=>r.rate_date<=dateStr).sort((a,b)=>b.rate_date.localeCompare(a.rate_date));
+  return sorted[0]?.usd_to_twd_rate ?? null;
+}
+function currentRate(){ return rateForDate(today()) }
+function updateRateBadge(){
+  const r = currentRate();
+  $('rateBadge').textContent = r ? `USD→TWD: ${r}` : 'No rate for today · add one in Exchange Rates';
+  $('rateBadge').style.color = r ? 'var(--ok)' : 'var(--warn)';
+}
+
+// ============================================================
+// NAV
+// ============================================================
+function renderNav(){
+  $('nav').innerHTML = TABS.map(t =>
+    `<button class="${t.id===currentTab?'active':''}" onclick="go('${t.id}')">${t.label}</button>`
+  ).join('');
+}
+let currentTab = 'dashboard';
+function go(id){ currentTab = id; renderNav(); render(); window.scrollTo(0,0) }
+
+// ============================================================
+// RENDER DISPATCHER
+// ============================================================
+function render(){
+  const el = $('main');
+  switch(currentTab){
+    case 'dashboard': el.innerHTML = renderDashboard(); break;
+    case 'orders': el.innerHTML = renderOrders(); break;
+    case 'items': el.innerHTML = renderItems(); break;
+    case 'shipments': el.innerHTML = renderShipments(); break;
+    case 'vendorEmails': el.innerHTML = renderVendorEmails(); break;
+    case 'forwarder': el.innerHTML = renderForwarder(); break;
+    case 'inventory': el.innerHTML = renderInventory(); break;
+    case 'rates': el.innerHTML = renderRates(); break;
+    case 'tools': el.innerHTML = renderTools(); break;
+  }
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard(){
+  const openOrders = DB.orders.filter(o=>!['Delivered to Buyer','Cancelled','Refunded'].includes(o.order_status)).length;
+  const delayed = DB.orders.filter(o=>o.order_status==='Delayed').length;
+  const needsReview = DB.orders.filter(o=>o.needs_review).length;
+  const high = DB.orders.filter(o=>o.risk_status==='High').length;
+  const critical = DB.orders.filter(o=>o.risk_status==='Critical').length;
+  const fwdReceived = DB.forwarder.filter(f=>f.forwarder_status==='Received').length;
+  const shippingTW = DB.forwarder.filter(f=>f.forwarder_status==='Shipped to Taiwan').length;
+  const deliveredTW = DB.forwarder.filter(f=>f.taiwan_delivery_status==='Delivered').length;
+  const unmatched = DB.forwarder.filter(f=>!matchForwarder(f)).length;
+  const outUSD = DB.orders.filter(o=>!['Delivered to Buyer','Cancelled','Refunded'].includes(o.order_status)).reduce((s,o)=>s+(+o.total_price_usd||0)+(+o.sales_tax_usd||0)+(+o.domestic_shipping_usd||0),0);
+  const outTWD = DB.orders.filter(o=>!['Delivered to Buyer','Cancelled','Refunded'].includes(o.order_status)).reduce((s,o)=>{
+    const r = rateForDate(o.purchase_date) || currentRate() || 0;
+    return s + ((+o.total_price_usd||0)+(+o.sales_tax_usd||0)+(+o.domestic_shipping_usd||0))*r;
+  },0);
+  const invAvail = DB.inventory.reduce((s,i)=>s+(+i.quantity_available||0),0);
+  const invRes = DB.inventory.reduce((s,i)=>s+(+i.quantity_reserved||0),0);
+  const invSold = DB.inventory.reduce((s,i)=>s+(+i.quantity_sold||0),0);
+
+  const stats = [
+    ['Open orders', openOrders],
+    ['Delayed', delayed],
+    ['Needs review', needsReview],
+    ['High risk', high],
+    ['Critical', critical],
+    ['At forwarder', fwdReceived],
+    ['Shipping to TW', shippingTW],
+    ['Delivered in TW', deliveredTW],
+    ['Unmatched forwarder pkgs', unmatched],
+    ['Outstanding USD', usd(outUSD)],
+    ['Outstanding TWD', twd(outTWD)],
+    ['Units available', invAvail],
+    ['Units reserved', invRes],
+    ['Units sold', invSold],
+  ];
+
+  const alerts = [];
+  DB.orders.forEach(o=>{
+    if(o.needs_review) alerts.push({type:'review', order:o, reason:'Flagged needs_review'});
+    if(o.risk_status==='Critical') alerts.push({type:'crit', order:o, reason:'Critical risk'});
+    if(o.risk_status==='High') alerts.push({type:'high', order:o, reason:'High risk'});
+  });
+  DB.forwarder.forEach(f=>{
+    if(!matchForwarder(f)) alerts.push({type:'unmatched', order:{retailer_order_number:f.us_tracking_number}, reason:'Forwarder package with no matching US shipment'});
+  });
+
+  return `
+    <div class="card">
+      <h2>Overview</h2>
+      <div class="grid grid-4">
+        ${stats.map(([l,v])=>`<div class="stat"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <h2>Attention needed (${alerts.length})</h2>
+      ${alerts.length===0? '<div class="empty">All clear.</div>' :
+        `<table><thead><tr><th>Order</th><th>Retailer</th><th>Reason</th><th>Status</th></tr></thead>
+        <tbody>${alerts.map(a=>`
+          <tr>
+            <td><code>${fmt(a.order.retailer_order_number)}</code></td>
+            <td>${fmt(a.order.retailer)}</td>
+            <td>${a.reason}</td>
+            <td>${a.order.order_status? `<span class="pill ${(a.order.risk_status||'low').toLowerCase()}">${a.order.order_status}</span>`:'—'}</td>
+          </tr>`).join('')}
+        </tbody></table>`
+      }
+    </div>
+  `;
+}
+
+// ============================================================
+// ORDERS
+// ============================================================
+function renderOrders(){
+  return `
+    <div class="card">
+      <h2>Add new order</h2>
+      ${orderForm()}
+    </div>
+    <div class="card">
+      <div class="toolbar">
+        <h2 style="margin:0">All orders (${DB.orders.length})</h2>
+        <input class="search" placeholder="Search retailer/order#/notes…" oninput="filterOrders(this.value)">
+      </div>
+      <div class="table-wrap" id="ordersTable">${ordersTable('')}</div>
+    </div>
+  `;
+}
+
+function orderForm(id=null){
+  const o = id ? DB.orders.find(x=>x.internal_order_id===id) : {};
+  const isNew = !id;
+  return `
+    <div class="grid grid-4">
+      <div><label>Retailer</label><select id="of_retailer">${RETAILERS.map(r=>`<option ${o.retailer===r?'selected':''}>${r}</option>`).join('')}</select></div>
+      <div><label>Purchase date</label><input type="date" id="of_purchase_date" value="${o.purchase_date||today()}"></div>
+      <div><label>Retailer order #</label><input id="of_retailer_order_number" value="${o.retailer_order_number||''}"></div>
+      <div><label>Payment method</label><input id="of_payment_method" value="${o.payment_method||''}"></div>
+      <div><label>Total price USD</label><input type="number" step="0.01" id="of_total_price_usd" value="${o.total_price_usd||''}"></div>
+      <div><label>Sales tax USD</label><input type="number" step="0.01" id="of_sales_tax_usd" value="${o.sales_tax_usd||''}"></div>
+      <div><label>Domestic shipping USD</label><input type="number" step="0.01" id="of_domestic_shipping_usd" value="${o.domestic_shipping_usd||0}"></div>
+      <div><label>Original expected delivery</label><input type="date" id="of_original_expected_delivery_date" value="${o.original_expected_delivery_date||''}"></div>
+      <div><label>Current expected delivery</label><input type="date" id="of_current_expected_delivery_date" value="${o.current_expected_delivery_date||''}"></div>
+      <div><label>Order status</label><select id="of_order_status">${ORDER_STATUS.map(s=>`<option ${o.order_status===s?'selected':''}>${s}</option>`).join('')}</select></div>
+      <div><label>Risk status</label><select id="of_risk_status">${RISK_STATUS.map(s=>`<option ${(o.risk_status||'Low')===s?'selected':''}>${s}</option>`).join('')}</select></div>
+      <div><label>Needs review</label><select id="of_needs_review"><option value="false" ${!o.needs_review?'selected':''}>No</option><option value="true" ${o.needs_review?'selected':''}>Yes</option></select></div>
+    </div>
+    <div class="grid grid-2" style="margin-top:8px">
+      <div><label>Notes</label><textarea id="of_notes">${o.notes||''}</textarea></div>
+      <div><label>Source email link (optional)</label><textarea id="of_source_email_link">${o.source_email_link||''}</textarea></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" onclick="saveOrder('${id||''}')">${isNew?'Add order':'Save changes'}</button>
+      ${!isNew?`<button class="btn sec" onclick="cancelEditOrder()">Cancel</button>`:''}
+      ${!isNew?`<button class="btn danger" onclick="deleteOrder('${id}')">Delete</button>`:''}
+    </div>
+    <div class="hint">Total TWD auto-calculates from the USD→TWD rate matching the purchase date. Add rates in the Exchange Rates tab.</div>
+  `;
+}
+function saveOrder(id){
+  const g = (k)=>$('of_'+k).value;
+  const gn = (k)=>{ const v = g(k); return v===''? '' : Number(v) };
+  const rec = {
+    internal_order_id: id || uid('ORD'),
+    retailer: g('retailer'),
+    purchase_date: g('purchase_date'),
+    retailer_order_number: g('retailer_order_number'),
+    original_expected_delivery_date: g('original_expected_delivery_date'),
+    current_expected_delivery_date: g('current_expected_delivery_date'),
+    total_price_usd: gn('total_price_usd'),
+    sales_tax_usd: gn('sales_tax_usd'),
+    domestic_shipping_usd: gn('domestic_shipping_usd'),
+    payment_method: g('payment_method'),
+    order_status: g('order_status'),
+    risk_status: g('risk_status'),
+    needs_review: g('needs_review')==='true',
+    notes: g('notes'),
+    source_email_link: g('source_email_link'),
+    delay_count: 0,
+    updated_at: now()
+  };
+  if(id){
+    const i = DB.orders.findIndex(o=>o.internal_order_id===id);
+    rec.delay_count = DB.orders[i].delay_count || 0;
+    rec.original_expected_delivery_date = DB.orders[i].original_expected_delivery_date || rec.original_expected_delivery_date;
+    DB.orders[i] = {...DB.orders[i], ...rec};
+    flash('Order updated');
+  } else {
+    if(!rec.original_expected_delivery_date) rec.original_expected_delivery_date = rec.current_expected_delivery_date;
+    DB.orders.unshift(rec);
+    flash('Order added · ' + rec.internal_order_id);
+  }
+  save(); render();
+}
+function editOrder(id){
+  $('editOrderRow_'+id)?.remove();
+  const tr = document.querySelector(`tr[data-oid="${id}"]`);
+  const cols = tr.children.length;
+  const row = document.createElement('tr');
+  row.id = 'editOrderRow_'+id;
+  row.innerHTML = `<td colspan="${cols}"><div class="card" style="margin:0">${orderForm(id)}</div></td>`;
+  tr.after(row);
+}
+function cancelEditOrder(){ render() }
+function deleteOrder(id){
+  if(!confirm('Delete this order? Items, shipments, and inventory lots linked to it will remain but reference a missing order.')) return;
+  DB.orders = DB.orders.filter(o=>o.internal_order_id!==id);
+  save(); render(); flash('Order deleted');
+}
+function toggleReview(id){
+  const o = DB.orders.find(x=>x.internal_order_id===id);
+  o.needs_review = !o.needs_review; save(); render();
+}
+function ordersTable(q){
+  q = (q||'').toLowerCase();
+  const rows = DB.orders.filter(o=>{
+    if(!q) return true;
+    return [o.retailer,o.retailer_order_number,o.notes,o.internal_order_id].join(' ').toLowerCase().includes(q);
+  });
+  if(rows.length===0) return '<div class="empty">No orders yet. Add one above.</div>';
+  return `<table><thead><tr>
+    <th>Order ID</th><th>Retailer</th><th>Order #</th><th>Purchased</th>
+    <th>Expected</th><th>Total USD</th><th>Total TWD</th>
+    <th>Status</th><th>Risk</th><th>Review</th><th></th>
+  </tr></thead><tbody>
+  ${rows.map(o=>{
+    const totalUsd = (+o.total_price_usd||0)+(+o.sales_tax_usd||0)+(+o.domestic_shipping_usd||0);
+    const r = rateForDate(o.purchase_date);
+    const totalTwd = r? totalUsd*r : null;
+    return `<tr data-oid="${o.internal_order_id}" class="${o.needs_review?'needs-review':''}">
+      <td><code>${o.internal_order_id}</code></td>
+      <td>${fmt(o.retailer)}</td>
+      <td>${fmt(o.retailer_order_number)}</td>
+      <td>${fmt(o.purchase_date)}</td>
+      <td>${fmt(o.current_expected_delivery_date)}</td>
+      <td>${usd(totalUsd)}</td>
+      <td>${totalTwd?twd(totalTwd):'<span class="tag">no rate</span>'}</td>
+      <td>${fmt(o.order_status)}</td>
+      <td><span class="pill ${(o.risk_status||'low').toLowerCase()}">${o.risk_status||'Low'}</span></td>
+      <td><input type="checkbox" ${o.needs_review?'checked':''} onchange="toggleReview('${o.internal_order_id}')"></td>
+      <td class="actions">
+        <button class="btn small sec" onclick="editOrder('${o.internal_order_id}')">Edit</button>
+      </td>
+    </tr>`;
+  }).join('')}
+  </tbody></table>`;
+}
+function filterOrders(q){ $('ordersTable').innerHTML = ordersTable(q) }
+
+// ============================================================
+// ITEMS
+// ============================================================
+function renderItems(){
+  return `
+    <div class="card">
+      <h2>Add item to an order</h2>
+      ${itemForm()}
+    </div>
+    <div class="card">
+      <h2>All items (${DB.items.length})</h2>
+      <div class="table-wrap">${itemsTable()}</div>
+    </div>
+  `;
+}
+function itemForm(id=null){
+  const it = id ? DB.items.find(x=>x.internal_item_id===id) : {};
+  const isNew = !id;
+  const orderOpts = DB.orders.map(o=>`<option value="${o.internal_order_id}" ${it.internal_order_id===o.internal_order_id?'selected':''}>${o.internal_order_id} · ${o.retailer} · ${o.retailer_order_number||''}</option>`).join('');
+  return `
+    <div class="grid grid-4">
+      <div><label>Order</label><select id="if_internal_order_id">${orderOpts||'<option value="">— no orders yet —</option>'}</select></div>
+      <div><label>Product name</label><input id="if_product_name" value="${it.product_name||''}"></div>
+      <div><label>SKU</label><input id="if_sku" value="${it.sku||''}"></div>
+      <div><label>Category</label><input id="if_product_category" value="${it.product_category||'Sports Cards'}"></div>
+      <div><label>Qty ordered</label><input type="number" id="if_quantity_ordered" value="${it.quantity_ordered||1}"></div>
+      <div><label>Qty cancelled</label><input type="number" id="if_quantity_cancelled" value="${it.quantity_cancelled||0}"></div>
+      <div><label>Qty received</label><input type="number" id="if_quantity_received" value="${it.quantity_received||0}"></div>
+      <div><label>Unit price USD</label><input type="number" step="0.01" id="if_unit_price_usd" value="${it.unit_price_usd||''}"></div>
+      <div><label>Item status</label><select id="if_item_status">${ITEM_STATUS.map(s=>`<option ${(it.item_status||'Ordered')===s?'selected':''}>${s}</option>`).join('')}</select></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" onclick="saveItem('${id||''}')">${isNew?'Add item':'Save changes'}</button>
+      ${!isNew?`<button class="btn danger" onclick="deleteItem('${id}')">Delete</button>`:''}
+    </div>
+  `;
+}
+function saveItem(id){
+  const g = (k)=>$('if_'+k).value;
+  const gn = (k)=>{ const v = g(k); return v===''? '' : Number(v) };
+  const rec = {
+    internal_item_id: id || uid('ITM'),
+    internal_order_id: g('internal_order_id'),
+    product_name: g('product_name'),
+    sku: g('sku'),
+    product_category: g('product_category'),
+    quantity_ordered: gn('quantity_ordered'),
+    quantity_cancelled: gn('quantity_cancelled'),
+    quantity_received: gn('quantity_received'),
+    unit_price_usd: gn('unit_price_usd'),
+    item_status: g('item_status'),
+  };
+  rec.total_item_price_usd = (+rec.quantity_ordered||0) * (+rec.unit_price_usd||0);
+  const order = DB.orders.find(o=>o.internal_order_id===rec.internal_order_id);
+  rec.retailer_order_number = order?.retailer_order_number || '';
+  if(id){
+    const i = DB.items.findIndex(x=>x.internal_item_id===id);
+    DB.items[i] = {...DB.items[i], ...rec};
+    flash('Item updated');
+  } else {
+    DB.items.unshift(rec); flash('Item added · '+rec.internal_item_id);
+  }
+  save(); render();
+}
+function deleteItem(id){
+  if(!confirm('Delete this item?')) return;
+  DB.items = DB.items.filter(x=>x.internal_item_id!==id);
+  save(); render(); flash('Item deleted');
+}
+function itemsTable(){
+  if(DB.items.length===0) return '<div class="empty">No items yet.</div>';
+  return `<table><thead><tr>
+    <th>Item ID</th><th>Order</th><th>Product</th><th>SKU</th><th>Qty</th><th>Received</th><th>Unit $</th><th>Total $</th><th>Status</th><th></th>
+  </tr></thead><tbody>
+  ${DB.items.map(i=>`<tr>
+    <td><code>${i.internal_item_id}</code></td>
+    <td><code>${i.internal_order_id||'—'}</code></td>
+    <td>${fmt(i.product_name)}</td>
+    <td>${fmt(i.sku)}</td>
+    <td>${fmt(i.quantity_ordered,0)}</td>
+    <td>${fmt(i.quantity_received,0)}</td>
+    <td>${usd(i.unit_price_usd)}</td>
+    <td>${usd(i.total_item_price_usd)}</td>
+    <td>${fmt(i.item_status)}</td>
+    <td><button class="btn small danger" onclick="deleteItem('${i.internal_item_id}')">×</button></td>
+  </tr>`).join('')}
+  </tbody></table>`;
+}
+
+// ============================================================
+// SHIPMENTS
+// ============================================================
+function renderShipments(){
+  return `
+    <div class="card">
+      <h2>Add US shipment</h2>
+      ${shipmentForm()}
+    </div>
+    <div class="card">
+      <h2>All shipments (${DB.shipments.length})</h2>
+      <div class="table-wrap">${shipmentsTable()}</div>
+    </div>
+  `;
+}
+function shipmentForm(){
+  const orderOpts = DB.orders.map(o=>`<option value="${o.internal_order_id}">${o.internal_order_id} · ${o.retailer_order_number||''}</option>`).join('');
+  return `
+    <div class="grid grid-4">
+      <div><label>Order</label><select id="sf_internal_order_id">${orderOpts||'<option value="">— no orders —</option>'}</select></div>
+      <div><label>Carrier</label><input id="sf_carrier" placeholder="UPS / FedEx / USPS"></div>
+      <div><label>US tracking #</label><input id="sf_us_tracking_number"></div>
+      <div><label>Status</label><select id="sf_shipment_status">${SHIP_STATUS.map(s=>`<option>${s}</option>`).join('')}</select></div>
+      <div><label>Shipped date</label><input type="date" id="sf_shipped_date"></div>
+      <div><label>Expected delivery</label><input type="date" id="sf_expected_delivery_date"></div>
+      <div><label>Actual delivery</label><input type="date" id="sf_actual_delivery_date"></div>
+      <div><label>Delivered to forwarder</label><select id="sf_delivered_to_forwarder"><option value="false">No</option><option value="true">Yes</option></select></div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="btn" onclick="saveShipment()">Add shipment</button></div>
+  `;
+}
+function saveShipment(){
+  const g = (k)=>$('sf_'+k).value;
+  const order = DB.orders.find(o=>o.internal_order_id===g('internal_order_id'));
+  const rec = {
+    internal_shipment_id: uid('SHP'),
+    internal_order_id: g('internal_order_id'),
+    retailer_order_number: order?.retailer_order_number || '',
+    carrier: g('carrier'),
+    us_tracking_number: g('us_tracking_number'),
+    shipment_status: g('shipment_status'),
+    shipped_date: g('shipped_date'),
+    expected_delivery_date: g('expected_delivery_date'),
+    actual_delivery_date: g('actual_delivery_date'),
+    delivered_to_forwarder: g('delivered_to_forwarder')==='true',
+  };
+  DB.shipments.unshift(rec); save(); render();
+  flash('Shipment added · '+rec.internal_shipment_id);
+}
+function deleteShipment(id){
+  if(!confirm('Delete this shipment?')) return;
+  DB.shipments = DB.shipments.filter(x=>x.internal_shipment_id!==id);
+  save(); render();
+}
+function shipmentsTable(){
+  if(DB.shipments.length===0) return '<div class="empty">No shipments yet.</div>';
+  return `<table><thead><tr>
+    <th>Shipment</th><th>Order</th><th>Carrier</th><th>Tracking</th><th>Status</th><th>Shipped</th><th>Expected</th><th>At forwarder?</th><th></th>
+  </tr></thead><tbody>
+  ${DB.shipments.map(s=>`<tr>
+    <td><code>${s.internal_shipment_id}</code></td>
+    <td><code>${s.internal_order_id}</code></td>
+    <td>${fmt(s.carrier)}</td>
+    <td><code>${fmt(s.us_tracking_number)}</code></td>
+    <td>${fmt(s.shipment_status)}</td>
+    <td>${fmt(s.shipped_date)}</td>
+    <td>${fmt(s.expected_delivery_date)}</td>
+    <td>${s.delivered_to_forwarder?'✓':'—'}</td>
+    <td><button class="btn small danger" onclick="deleteShipment('${s.internal_shipment_id}')">×</button></td>
+  </tr>`).join('')}
+  </tbody></table>`;
+}
+
+// ============================================================
+// VENDOR EMAILS
+// ============================================================
+function renderVendorEmails(){
+  return `
+    <div class="card">
+      <h2>Log a vendor email</h2>
+      ${vendorEmailForm()}
+    </div>
+    <div class="card">
+      <h2>Email log (${DB.vendorEmails.length})</h2>
+      <div class="table-wrap">${vendorEmailsTable()}</div>
+    </div>
+  `;
+}
+function vendorEmailForm(){
+  const orderOpts = ['<option value="">— unmatched —</option>'].concat(
+    DB.orders.map(o=>`<option value="${o.internal_order_id}">${o.internal_order_id} · ${o.retailer} · ${o.retailer_order_number||''}</option>`)
+  ).join('');
+  return `
+    <div class="grid grid-4">
+      <div><label>Retailer</label><select id="vf_retailer">${RETAILERS.map(r=>`<option>${r}</option>`).join('')}</select></div>
+      <div><label>Email date</label><input type="date" id="vf_email_date" value="${today()}"></div>
+      <div><label>Email type</label><select id="vf_email_type">${EMAIL_TYPE.map(s=>`<option>${s}</option>`).join('')}</select></div>
+      <div><label>Severity</label><select id="vf_severity">${SEVERITY.map(s=>`<option>${s}</option>`).join('')}</select></div>
+      <div><label>Match to order</label><select id="vf_internal_order_id">${orderOpts}</select></div>
+      <div><label>Subject</label><input id="vf_email_subject"></div>
+      <div><label>Old expected delivery</label><input type="date" id="vf_old_expected_delivery_date"></div>
+      <div><label>New expected delivery</label><input type="date" id="vf_new_expected_delivery_date"></div>
+      <div><label>US tracking #</label><input id="vf_us_tracking_number"></div>
+      <div><label>Confidence (0-1)</label><input type="number" step="0.01" min="0" max="1" id="vf_confidence_score" value="1"></div>
+      <div><label>Auto-apply if ≥0.85</label><select id="vf_apply"><option value="true">Yes</option><option value="false">No</option></select></div>
+    </div>
+    <div class="grid grid-2" style="margin-top:8px">
+      <div><label>Summary</label><textarea id="vf_raw_email_summary"></textarea></div>
+      <div><label>Action needed</label><textarea id="vf_action_needed"></textarea></div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="btn" onclick="saveVendorEmail()">Log email</button></div>
+    <div class="hint">If confidence ≥ 0.85 and "Auto-apply" is Yes, the linked order will be updated: current_expected_delivery_date, status, delay_count, and needs_review. The original expected delivery date is never overwritten.</div>
+  `;
+}
+function saveVendorEmail(){
+  const g = (k)=>$('vf_'+k).value;
+  const gn = (k)=>{ const v = g(k); return v===''? '' : Number(v) };
+  const rec = {
+    vendor_update_id: uid('VUP'),
+    retailer: g('retailer'),
+    email_date: g('email_date'),
+    email_type: g('email_type'),
+    severity: g('severity'),
+    internal_order_id: g('internal_order_id'),
+    email_subject: g('email_subject'),
+    old_expected_delivery_date: g('old_expected_delivery_date'),
+    new_expected_delivery_date: g('new_expected_delivery_date'),
+    us_tracking_number: g('us_tracking_number'),
+    confidence_score: gn('confidence_score'),
+    raw_email_summary: g('raw_email_summary'),
+    action_needed: g('action_needed'),
+    logged_at: now()
+  };
+  DB.vendorEmails.unshift(rec);
+
+  // Auto-apply logic (only if confidence >= 0.85 and matched)
+  const apply = g('apply')==='true';
+  if(apply && rec.confidence_score >= 0.85 && rec.internal_order_id){
+    const o = DB.orders.find(x=>x.internal_order_id===rec.internal_order_id);
+    if(o){
+      const delayTypes = ['Delay Notice','Delivery Date Update'];
+      if(delayTypes.includes(rec.email_type) && rec.new_expected_delivery_date){
+        o.current_expected_delivery_date = rec.new_expected_delivery_date;
+        o.delay_count = (o.delay_count||0)+1;
+        o.order_status = 'Delayed';
+        const oldD = new Date(rec.old_expected_delivery_date || o.original_expected_delivery_date);
+        const newD = new Date(rec.new_expected_delivery_date);
+        const diff = Math.round((newD-oldD)/(1000*60*60*24));
+        if(Math.abs(diff)>3 || o.delay_count>1){ o.risk_status='High'; o.needs_review=true; }
+        else o.risk_status = o.risk_status==='Critical'?'Critical':'Medium';
+      }
+      if(rec.email_type==='Cancellation'){ o.order_status='Cancelled'; o.risk_status='Critical'; o.needs_review=true; }
+      if(rec.email_type==='Refund'){ o.order_status='Refunded'; o.risk_status='Critical'; o.needs_review=true; }
+      if(rec.email_type==='Backorder Notice'){ o.order_status='Backordered'; o.risk_status='High'; o.needs_review=true; }
+      if(rec.email_type==='Partial Shipment'){ o.order_status='Partially Shipped'; o.risk_status='High'; o.needs_review=true; }
+      if(rec.email_type==='Payment Issue'){ o.risk_status='Critical'; o.needs_review=true; }
+      if(rec.email_type==='Shipping Confirmation'){ o.order_status='Shipped'; }
+      if(rec.email_type==='Delivered Notice'){ o.order_status='Delivered to US Forwarder'; }
+      o.latest_vendor_update = rec.email_type;
+      o.last_vendor_email_date = rec.email_date;
+    }
+  } else if(rec.confidence_score < 0.85){
+    // low confidence — flag order for review if matched
+    if(rec.internal_order_id){
+      const o = DB.orders.find(x=>x.internal_order_id===rec.internal_order_id);
+      if(o) o.needs_review = true;
+    }
+  }
+
+  save(); render(); flash('Email logged');
+}
+function vendorEmailsTable(){
+  if(DB.vendorEmails.length===0) return '<div class="empty">No vendor emails logged yet.</div>';
+  return `<table><thead><tr>
+    <th>Date</th><th>Retailer</th><th>Type</th><th>Order</th><th>Subject</th><th>New ETA</th><th>Confidence</th><th>Severity</th><th></th>
+  </tr></thead><tbody>
+  ${DB.vendorEmails.map(v=>`<tr>
+    <td>${fmt(v.email_date)}</td>
+    <td>${fmt(v.retailer)}</td>
+    <td>${fmt(v.email_type)}</td>
+    <td><code>${fmt(v.internal_order_id,'unmatched')}</code></td>
+    <td>${fmt(v.email_subject)}</td>
+    <td>${fmt(v.new_expected_delivery_date)}</td>
+    <td>${(v.confidence_score??1).toFixed(2)}</td>
+    <td>${fmt(v.severity)}</td>
+    <td><button class="btn small danger" onclick="deleteVendorEmail('${v.vendor_update_id}')">×</button></td>
+  </tr>`).join('')}
+  </tbody></table>`;
+}
+function deleteVendorEmail(id){
+  if(!confirm('Delete this log entry? (Won\'t revert any order changes already applied.)')) return;
+  DB.vendorEmails = DB.vendorEmails.filter(v=>v.vendor_update_id!==id);
+  save(); render();
+}
+
+// ============================================================
+// FORWARDER
+// ============================================================
+function matchForwarder(f){
+  if(!f.us_tracking_number) return null;
+  const s = DB.shipments.find(x=>x.us_tracking_number===f.us_tracking_number);
+  return s?.internal_order_id || null;
+}
+function renderForwarder(){
+  return `
+    <div class="card">
+      <h2>Log forwarder record</h2>
+      ${forwarderForm()}
+    </div>
+    <div class="card">
+      <h2>Forwarder shipments (${DB.forwarder.length})</h2>
+      <div class="table-wrap">${forwarderTable()}</div>
+    </div>
+  `;
+}
+function forwarderForm(){
+  return `
+    <div class="grid grid-4">
+      <div><label>US tracking #</label><input id="ff_us_tracking_number" placeholder="paste from forwarder sheet"></div>
+      <div><label>Warehouse received</label><input type="date" id="ff_warehouse_received_date" value="${today()}"></div>
+      <div><label>Forwarder status</label><select id="ff_forwarder_status">${FWD_STATUS.map(s=>`<option>${s}</option>`).join('')}</select></div>
+      <div><label>Package weight (lb/kg)</label><input type="number" step="0.01" id="ff_package_weight"></div>
+      <div><label>Shipping cost USD</label><input type="number" step="0.01" id="ff_shipping_cost_usd"></div>
+      <div><label>Taiwan tracking #</label><input id="ff_taiwan_tracking_number"></div>
+      <div><label>Taiwan carrier</label><input id="ff_taiwan_carrier"></div>
+      <div><label>Taiwan ship date</label><input type="date" id="ff_taiwan_ship_date"></div>
+      <div><label>TW delivery status</label><select id="ff_taiwan_delivery_status">${TW_DELIVERY.map(s=>`<option>${s}</option>`).join('')}</select></div>
+      <div><label>TW delivery date</label><input type="date" id="ff_taiwan_delivery_date"></div>
+    </div>
+    <div style="margin-top:8px"><label>Notes</label><textarea id="ff_notes"></textarea></div>
+    <div class="row" style="margin-top:12px"><button class="btn" onclick="saveForwarder()">Log forwarder row</button></div>
+    <div class="hint">Match happens by us_tracking_number against your US shipments. Unmatched rows highlight yellow.</div>
+  `;
+}
+function saveForwarder(){
+  const g = (k)=>$('ff_'+k).value;
+  const gn = (k)=>{ const v = g(k); return v===''? '' : Number(v) };
+  const rec = {
+    forwarder_record_id: uid('FWD'),
+    us_tracking_number: g('us_tracking_number'),
+    warehouse_received_date: g('warehouse_received_date'),
+    forwarder_status: g('forwarder_status'),
+    package_weight: gn('package_weight'),
+    shipping_cost_usd: gn('shipping_cost_usd'),
+    taiwan_tracking_number: g('taiwan_tracking_number'),
+    taiwan_carrier: g('taiwan_carrier'),
+    taiwan_ship_date: g('taiwan_ship_date'),
+    taiwan_delivery_status: g('taiwan_delivery_status'),
+    taiwan_delivery_date: g('taiwan_delivery_date'),
+    notes: g('notes'),
+  };
+  DB.forwarder.unshift(rec);
+
+  // Auto-update linked order status
+  const oid = matchForwarder(rec);
+  if(oid){
+    const o = DB.orders.find(x=>x.internal_order_id===oid);
+    if(o){
+      if(rec.warehouse_received_date && !['Shipping to Taiwan','Arrived Taiwan','Delivered to Buyer'].includes(o.order_status)) o.order_status='Forwarder Received';
+      if(rec.taiwan_tracking_number) o.order_status='Shipping to Taiwan';
+      if(rec.taiwan_delivery_status==='Delivered' || rec.taiwan_delivery_date) o.order_status='Delivered to Buyer';
+    }
+  }
+  save(); render(); flash('Forwarder row added · '+rec.forwarder_record_id);
+}
+function deleteForwarder(id){
+  if(!confirm('Delete this forwarder record?')) return;
+  DB.forwarder = DB.forwarder.filter(f=>f.forwarder_record_id!==id);
+  save(); render();
+}
+function forwarderTable(){
+  if(DB.forwarder.length===0) return '<div class="empty">No forwarder records yet.</div>';
+  return `<table><thead><tr>
+    <th>FWD ID</th><th>US tracking</th><th>Matched order</th><th>Received</th><th>Status</th><th>Weight</th><th>Ship $</th><th>TW tracking</th><th>TW status</th><th>TW delivered</th><th></th>
+  </tr></thead><tbody>
+  ${DB.forwarder.map(f=>{
+    const oid = matchForwarder(f);
+    return `<tr class="${oid?'':'needs-review'}">
+      <td><code>${f.forwarder_record_id}</code></td>
+      <td><code>${fmt(f.us_tracking_number)}</code></td>
+      <td>${oid?`<code>${oid}</code>`:'<span class="pill critical">UNMATCHED</span>'}</td>
+      <td>${fmt(f.warehouse_received_date)}</td>
+      <td>${fmt(f.forwarder_status)}</td>
+      <td>${fmt(f.package_weight)}</td>
+      <td>${usd(f.shipping_cost_usd)}</td>
+      <td><code>${fmt(f.taiwan_tracking_number)}</code></td>
+      <td>${fmt(f.taiwan_delivery_status)}</td>
+      <td>${fmt(f.taiwan_delivery_date)}</td>
+      <td><button class="btn small danger" onclick="deleteForwarder('${f.forwarder_record_id}')">×</button></td>
+    </tr>`;
+  }).join('')}
+  </tbody></table>`;
+}
+
+// ============================================================
+// INVENTORY
+// ============================================================
+function renderInventory(){
+  return `
+    <div class="card">
+      <h2>Create inventory lot</h2>
+      ${inventoryForm()}
+    </div>
+    <div class="card">
+      <h2>Inventory (${DB.inventory.length})</h2>
+      <div class="table-wrap">${inventoryTable()}</div>
+    </div>
+  `;
+}
+function inventoryForm(){
+  const itemOpts = DB.items.map(it=>`<option value="${it.internal_item_id}">${it.internal_item_id} · ${it.product_name}</option>`).join('');
+  return `
+    <div class="grid grid-4">
+      <div><label>Linked item</label><select id="lf_internal_item_id">${itemOpts||'<option value="">— no items yet —</option>'}</select></div>
+      <div><label>Product name (override)</label><input id="lf_product_name"></div>
+      <div><label>Qty available</label><input type="number" id="lf_quantity_available"></div>
+      <div><label>Qty reserved</label><input type="number" id="lf_quantity_reserved" value="0"></div>
+      <div><label>Qty sold</label><input type="number" id="lf_quantity_sold" value="0"></div>
+      <div><label>Landed cost USD</label><input type="number" step="0.01" id="lf_landed_cost_usd"></div>
+      <div><label>Inventory status</label><select id="lf_inventory_status">${INV_STATUS.map(s=>`<option>${s}</option>`).join('')}</select></div>
+      <div><label>Location</label><input id="lf_location" placeholder="Forwarder / TW warehouse"></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" onclick="saveLot()">Create lot</button>
+      <button class="btn sec" onclick="autoLandedCost()">Auto-calc landed cost →</button>
+    </div>
+    <div class="hint">"Auto-calc" fills landed cost USD from the linked order (product + tax + domestic shipping + allocated forwarding cost by quantity).</div>
+  `;
+}
+function autoLandedCost(){
+  const iid = $('lf_internal_item_id').value;
+  const item = DB.items.find(x=>x.internal_item_id===iid);
+  if(!item){ flash('Pick a linked item first', true); return }
+  const order = DB.orders.find(o=>o.internal_order_id===item.internal_order_id);
+  if(!order){ flash('Linked order not found', true); return }
+  const itemsInOrder = DB.items.filter(x=>x.internal_order_id===order.internal_order_id);
+  const totalQty = itemsInOrder.reduce((s,x)=>s+(+x.quantity_ordered||0),0) || 1;
+  // find forwarder rows for any US shipment attached to this order
+  const shipTracks = DB.shipments.filter(s=>s.internal_order_id===order.internal_order_id).map(s=>s.us_tracking_number);
+  const fwdRows = DB.forwarder.filter(f=>shipTracks.includes(f.us_tracking_number));
+  const fwdCostTotal = fwdRows.reduce((s,f)=>s+(+f.shipping_cost_usd||0),0);
+  const allocatedFwd = fwdCostTotal * ((+item.quantity_ordered||0)/totalQty);
+  const productCost = (+item.total_item_price_usd || (+item.unit_price_usd * +item.quantity_ordered)) || 0;
+  const share = (+item.quantity_ordered||0)/totalQty;
+  const taxShare = (+order.sales_tax_usd||0)*share;
+  const shipShare = (+order.domestic_shipping_usd||0)*share;
+  const landed = productCost + taxShare + shipShare + allocatedFwd;
+  $('lf_landed_cost_usd').value = landed.toFixed(2);
+  $('lf_quantity_available').value = (+item.quantity_received || +item.quantity_ordered) || 1;
+  flash(`Landed = product ${usd(productCost)} + tax ${usd(taxShare)} + dom-ship ${usd(shipShare)} + fwd ${usd(allocatedFwd)} = ${usd(landed)}`);
+}
+function saveLot(){
+  const g = (k)=>$('lf_'+k).value;
+  const gn = (k)=>{ const v = g(k); return v===''? '' : Number(v) };
+  const item = DB.items.find(x=>x.internal_item_id===g('internal_item_id'));
+  const rec = {
+    inventory_lot_id: uid('LOT'),
+    internal_item_id: g('internal_item_id'),
+    internal_order_id: item?.internal_order_id || '',
+    product_name: g('product_name') || item?.product_name || '',
+    quantity_available: gn('quantity_available'),
+    quantity_reserved: gn('quantity_reserved'),
+    quantity_sold: gn('quantity_sold'),
+    landed_cost_usd: gn('landed_cost_usd'),
+    inventory_status: g('inventory_status'),
+    location: g('location'),
+  };
+  const total = (+rec.quantity_available||0)+(+rec.quantity_reserved||0)+(+rec.quantity_sold||0);
+  rec.unit_landed_cost_usd = total? (rec.landed_cost_usd/total) : null;
+  const r = currentRate();
+  rec.landed_cost_twd = r? rec.landed_cost_usd*r : null;
+  rec.unit_landed_cost_twd = r && rec.unit_landed_cost_usd? rec.unit_landed_cost_usd*r : null;
+  DB.inventory.unshift(rec); save(); render();
+  flash('Lot created · '+rec.inventory_lot_id);
+}
+function deleteLot(id){
+  if(!confirm('Delete this lot?')) return;
+  DB.inventory = DB.inventory.filter(x=>x.inventory_lot_id!==id);
+  save(); render();
+}
+function inventoryTable(){
+  if(DB.inventory.length===0) return '<div class="empty">No inventory lots yet.</div>';
+  return `<table><thead><tr>
+    <th>Lot</th><th>Product</th><th>Avail</th><th>Reserved</th><th>Sold</th><th>Landed $</th><th>Unit $</th><th>Landed NT$</th><th>Unit NT$</th><th>Status</th><th>Location</th><th></th>
+  </tr></thead><tbody>
+  ${DB.inventory.map(l=>`<tr>
+    <td><code>${l.inventory_lot_id}</code></td>
+    <td>${fmt(l.product_name)}</td>
+    <td>${fmt(l.quantity_available,0)}</td>
+    <td>${fmt(l.quantity_reserved,0)}</td>
+    <td>${fmt(l.quantity_sold,0)}</td>
+    <td>${usd(l.landed_cost_usd)}</td>
+    <td>${usd(l.unit_landed_cost_usd)}</td>
+    <td>${twd(l.landed_cost_twd)}</td>
+    <td>${twd(l.unit_landed_cost_twd)}</td>
+    <td>${fmt(l.inventory_status)}</td>
+    <td>${fmt(l.location)}</td>
+    <td><button class="btn small danger" onclick="deleteLot('${l.inventory_lot_id}')">×</button></td>
+  </tr>`).join('')}
+  </tbody></table>`;
+}
+
+// ============================================================
+// RATES
+// ============================================================
+function renderRates(){
+  return `
+    <div class="card">
+      <h2>Add exchange rate</h2>
+      <div class="grid grid-4">
+        <div><label>Date</label><input type="date" id="rf_rate_date" value="${today()}"></div>
+        <div><label>USD → TWD</label><input type="number" step="0.0001" id="rf_usd_to_twd_rate" placeholder="e.g. 32.15"></div>
+        <div><label>Source</label><input id="rf_source" placeholder="Wise / Google / Bank"></div>
+        <div style="align-self:flex-end"><button class="btn" onclick="saveRate()">Add rate</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Rate history (${DB.rates.length})</h2>
+      <div class="table-wrap">${ratesTable()}</div>
+    </div>
+  `;
+}
+function saveRate(){
+  const rec = {
+    rate_date: $('rf_rate_date').value,
+    usd_to_twd_rate: Number($('rf_usd_to_twd_rate').value),
+    source: $('rf_source').value,
+  };
+  if(!rec.rate_date || !rec.usd_to_twd_rate){ flash('Fill date and rate', true); return }
+  DB.rates = DB.rates.filter(r=>r.rate_date!==rec.rate_date);
+  DB.rates.push(rec);
+  DB.rates.sort((a,b)=>b.rate_date.localeCompare(a.rate_date));
+  save(); render(); flash('Rate saved');
+}
+function deleteRate(date){
+  if(!confirm('Delete this rate?')) return;
+  DB.rates = DB.rates.filter(r=>r.rate_date!==date);
+  save(); render();
+}
+function ratesTable(){
+  if(DB.rates.length===0) return '<div class="empty">No rates yet. Add today\'s rate — you can look it up on Google or Wise.</div>';
+  return `<table><thead><tr><th>Date</th><th>USD→TWD</th><th>Source</th><th></th></tr></thead>
+  <tbody>${DB.rates.map(r=>`<tr>
+    <td>${r.rate_date}</td><td>${r.usd_to_twd_rate}</td><td>${fmt(r.source)}</td>
+    <td><button class="btn small danger" onclick="deleteRate('${r.rate_date}')">×</button></td>
+  </tr>`).join('')}</tbody></table>`;
+}
+
+// ============================================================
+// TOOLS (export, prompt-copy, wipe)
+// ============================================================
+function renderTools(){
+  return `
+    <div class="card">
+      <h2>Export to Google Sheets (CSV)</h2>
+      <p class="hint">Download each table as CSV; open in your Google Sheet and paste under the header row.</p>
+      <div class="row">
+        <button class="btn" onclick="downloadCSV('orders')">Orders CSV</button>
+        <button class="btn" onclick="downloadCSV('items')">Items CSV</button>
+        <button class="btn" onclick="downloadCSV('shipments')">Shipments CSV</button>
+        <button class="btn" onclick="downloadCSV('vendorEmails')">Vendor emails CSV</button>
+        <button class="btn" onclick="downloadCSV('forwarder')">Forwarder CSV</button>
+        <button class="btn" onclick="downloadCSV('inventory')">Inventory CSV</button>
+        <button class="btn" onclick="downloadCSV('rates')">Rates CSV</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Backup / restore</h2>
+      <p class="hint">Everything lives in your browser's localStorage. Back it up regularly to a file you keep somewhere safe.</p>
+      <div class="row">
+        <button class="btn" onclick="exportAll()">Download full backup (JSON)</button>
+        <button class="btn sec" onclick="document.getElementById('importFile').click()">Restore from JSON</button>
+        <button class="btn danger" onclick="wipeAll()">Wipe all data</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Paste JSON from Claude</h2>
+      <p class="hint">If you use PROMPT.md in Claude to parse an email, paste Claude's JSON output here — I'll insert the order + items + shipments.</p>
+      <textarea id="jsonPaste" style="min-height:160px" placeholder='{"retailer_order": {...}, "order_items": [...], "us_shipments": [...]}'></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn" onclick="importClaudeJson()">Import</button></div>
+    </div>
+    <div class="card">
+      <h2>Storage stats</h2>
+      <p class="hint">
+        Orders: ${DB.orders.length} · Items: ${DB.items.length} · Shipments: ${DB.shipments.length} ·
+        Vendor emails: ${DB.vendorEmails.length} · Forwarder: ${DB.forwarder.length} ·
+        Inventory: ${DB.inventory.length} · Rates: ${DB.rates.length}
+      </p>
+    </div>
+  `;
+}
+function downloadCSV(kind){
+  const rows = DB[kind];
+  if(!rows || rows.length===0){ flash('Nothing to export', true); return }
+  const cols = Object.keys(rows[0]);
+  const esc = (v)=>{ if(v===null||v===undefined) return ''; const s=String(v); return /[",\n]/.test(s)? '"'+s.replace(/"/g,'""')+'"' : s };
+  const csv = [cols.join(',')].concat(rows.map(r=>cols.map(c=>esc(r[c])).join(','))).join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=`${kind}_${today()}.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+function exportAll(){
+  const blob = new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=`invops_backup_${today()}.json`; a.click();
+  URL.revokeObjectURL(url); flash('Backup downloaded');
+}
+function importAll(ev){
+  const f = ev.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const data = JSON.parse(r.result);
+      if(!confirm('Replace all current data with this backup?')) return;
+      DB = data; save(); render(); flash('Restored');
+    }catch(e){ flash('Invalid JSON', true) }
+  };
+  r.readAsText(f);
+}
+function wipeAll(){
+  if(!confirm('Delete ALL data? This cannot be undone (unless you have a backup).')) return;
+  if(!confirm('Really wipe everything?')) return;
+  DB = emptyDB(); save(); render(); flash('Wiped');
+}
+function importClaudeJson(){
+  try{
+    const data = JSON.parse($('jsonPaste').value);
+    const ro = data.retailer_order || {};
+    const oid = uid('ORD');
+    const order = {
+      internal_order_id: oid,
+      retailer: ro.retailer || 'Other',
+      purchase_date: ro.purchase_date || today(),
+      retailer_order_number: ro.retailer_order_number || '',
+      original_expected_delivery_date: ro.original_expected_delivery_date || ro.current_expected_delivery_date || '',
+      current_expected_delivery_date: ro.current_expected_delivery_date || ro.original_expected_delivery_date || '',
+      total_price_usd: ro.total_price_usd || '',
+      sales_tax_usd: ro.sales_tax_usd || '',
+      domestic_shipping_usd: ro.domestic_shipping_usd || 0,
+      payment_method: ro.payment_method || '',
+      order_status: ro.order_status || 'Order Placed',
+      risk_status: ro.risk_status || 'Low',
+      delay_count: 0,
+      needs_review: !!ro.needs_review,
+      notes: ro.notes || '',
+      source_email_link: ro.source_email_link || '',
+    };
+    DB.orders.unshift(order);
+    (data.order_items||[]).forEach(it=>{
+      DB.items.unshift({
+        internal_item_id: uid('ITM'),
+        internal_order_id: oid,
+        retailer_order_number: order.retailer_order_number,
+        product_name: it.product_name || '',
+        product_category: it.product_category || 'Sports Cards',
+        sku: it.sku || '',
+        quantity_ordered: it.quantity_ordered || 1,
+        quantity_cancelled: 0,
+        quantity_received: 0,
+        unit_price_usd: it.unit_price_usd || '',
+        total_item_price_usd: it.total_item_price_usd || (it.unit_price_usd*it.quantity_ordered) || '',
+        item_status: it.item_status || 'Ordered',
+      });
+    });
+    (data.us_shipments||[]).filter(s=>s.us_tracking_number||s.carrier).forEach(s=>{
+      DB.shipments.unshift({
+        internal_shipment_id: uid('SHP'),
+        internal_order_id: oid,
+        retailer_order_number: order.retailer_order_number,
+        carrier: s.carrier || '',
+        us_tracking_number: s.us_tracking_number || '',
+        shipment_status: s.shipment_status || 'Label Created',
+        shipped_date: s.shipped_date || '',
+        expected_delivery_date: s.expected_delivery_date || '',
+        actual_delivery_date: s.actual_delivery_date || '',
+        delivered_to_forwarder: false,
+      });
+    });
+    save(); render(); flash('Imported order '+oid);
+  }catch(e){ flash('Invalid JSON: '+e.message, true) }
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+renderNav(); render(); updateRateBadge();
+</script>
+</body>
+</html>

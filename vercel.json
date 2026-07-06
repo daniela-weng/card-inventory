@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json"
+  // "crons": [
+  //   { "path": "/api/agents/order-intake",   "schedule": "*/15 * * * *" },
+  //   { "path": "/api/agents/vendor-update",  "schedule": "*/15 * * * *" },
+  //   { "path": "/api/agents/tracking",       "schedule": "0 */2 * * *" },
+  //   { "path": "/api/agents/forwarder-sync", "schedule": "0 */6 * * *" },
+  //   { "path": "/api/agents/finance",        "schedule": "0 3 * * *" },
+  //   { "path": "/api/agents/exception",      "schedule": "0 */4 * * *" }
+  // ]
+}
