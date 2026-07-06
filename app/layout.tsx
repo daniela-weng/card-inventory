@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "AI-assisted inventory operations for US → Taiwan sports card dropshipping.",
 };
 
+// Every page hits Supabase — never prerender at build time.
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({
   children,
 }: {
